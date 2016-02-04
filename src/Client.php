@@ -128,9 +128,9 @@ class Client
     }
     /**
      * Start listening.
-     * @method listen
+     * @method run
      */
-    public function listen()
+    public function run()
     {
         while (true) {
             if (isset($this->tick)) {

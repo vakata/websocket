@@ -9,7 +9,7 @@
 |[onMessage](#vakata\websocket\clientonmessage)|Set a callback to execute when a message arrives.|
 |[onTick](#vakata\websocket\clientontick)|Set a callback to execute every few milliseconds.|
 |[send](#vakata\websocket\clientsend)|Send a message to the server.|
-|[listen](#vakata\websocket\clientlisten)|Start listening.|
+|[run](#vakata\websocket\clientrun)|Start listening.|
 |[sendClear](#vakata\websocket\clientsendclear)|Send data to a socket in clear form (basically fwrite)|
 |[receiveClear](#vakata\websocket\clientreceiveclear)|Read clear data from a socket (basically a fread).|
 |[receive](#vakata\websocket\clientreceive)|Read data from a socket (in websocket format)|
@@ -96,12 +96,12 @@ public function send (
 ---
 
 
-### vakata\websocket\Client::listen
+### vakata\websocket\Client::run
 Start listening.  
 
 
 ```php
-public function listen ()   
+public function run ()   
 ```
 
 

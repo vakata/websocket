@@ -16,10 +16,30 @@ Via Composer
 $ composer require vakata/websocket
 ```
 
-## Usage
+## Server usage
 
 ``` php
-$config = new \vakata\websocket\Server('ws://127.0.0.1:8000');
+// this handler will forward each message to all clients (except the sender)
+$server = new \vakata\websocket\Server('ws://127.0.0.1:8080');
+$server->onMessage(function ($sender, $message, $server) {
+    foreach ($server->getClients() as $client) {
+        if ((int)$sender['socket'] !== (int)$client['socket']) {
+            $server->send($client['socket'], $message);
+        }
+    }
+});
+$server->run();
+```
+
+## Client usage
+
+``` php
+// this handler will echo each message to standard output
+$client = new \vakata\websocket\Client('ws://127.0.0.1:8080');
+$client->onMessage(function ($message, $client) {
+    echo $message . "\r\n";
+});
+$client->run();
 ```
 
 Read more in the [API docs](docs/README.md)
