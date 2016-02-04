@@ -38,12 +38,15 @@ class Client
                 'Host' => $addr['host'].':'.$addr['port'],
                 'Connection' => 'Upgrade',
                 'Upgrade' => 'websocket',
-                'Sec-WebSocket-Key' => $key,
-                'Sec-WebSocket-Version' => '13',
+                'Sec-Websocket-Key' => $key,
+                'Sec-Websocket-Version' => '13',
             ]),
             $this->normalizeHeaders($headers)
         );
-        $key = $headers['Sec-WebSocket-Key'];
+        $key = $headers['Sec-Websocket-Key'];
+        foreach ($headers as $name => $value) {
+            $headers[$name] = $name . ': ' . $value;
+        }
         array_unshift(
             $headers,
             'GET '.(isset($addr['path']) && strlen($addr['path']) ? $addr['path'] : '/').' HTTP/1.1'
@@ -51,7 +54,7 @@ class Client
         $this->sendClear($this->socket, implode("\r\n", $headers)."\r\n");
 
         $data = $this->receiveClear($this->socket);
-        if (!preg_match('(Sec-WebSocket-Accept:\s*(.*)$)mUi', $data, $matches)) {
+        if (!preg_match('(Sec-Websocket-Accept:\s*(.*)$)mUi', $data, $matches)) {
             throw new WebSocketException('Bad response');
         }
         if (trim($matches[1]) !== base64_encode(pack('H*', sha1($key.self::$magic)))) {

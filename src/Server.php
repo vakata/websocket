@@ -41,7 +41,7 @@ class Server
         }
 
         $this->address = $address;
-        $this->server = stream_socket_server(
+        $this->server = @stream_socket_server(
             (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp').'://'.$addr['host'].':'.$addr['port'],
             $ern = null,
             $ers = null,
@@ -233,7 +233,7 @@ class Server
         }
         $cookies = [];
         if (isset($headers['cookie'])) {
-            $temp = explode(';', $this->getHeader('Cookie'));
+            $temp = explode(';', $headers['cookie']);
             foreach ($temp as $v) {
                 $v = explode('=', $v, 2);
                 $cookies[trim($v[0])] = $v[1];
