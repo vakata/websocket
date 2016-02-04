@@ -1,3 +1,5 @@
 build
 composer.lock
 vendor
+/tests/bundle.pem
+/tests/index.php
