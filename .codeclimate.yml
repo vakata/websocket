@@ -1,0 +1,24 @@
+engines:
+  phpcodesniffer:
+    enabled: true
+    config:
+      file_extensions: "php"
+      standard: "PSR1,PSR2"
+  phpmd:
+    enabled: true
+    checks:
+      CleanCode/BooleanArgumentFlag:
+        enabled: false
+      CleanCode/ElseExpression:
+        enabled: false
+      Naming/ShortVariable:
+        enabled: false
+      Design/TooManyMethods:
+        enabled: false
+      Design/NpathComplexity:
+        enabled: false
+ratings:
+  paths:
+  - "**.php"
+exclude_paths:
+- tests/**/*
