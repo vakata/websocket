@@ -1,9 +1,4 @@
 build
 composer.lock
 vendor
-/tests/bundle.pem
-/tests/index.php
-/tests/client.php
-/tests/server.php
-/tests/recv.html
-/tests/send.html
+run
