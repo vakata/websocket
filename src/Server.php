@@ -67,7 +67,7 @@ class Server
                 }
             }
             $changed = $this->sockets;
-            if (@stream_select($changed, $write = null, $except = null, null) > 0) {
+            if (@stream_select($changed, $write = null, $except = null, (isset($this->tick) ? 0 : null) ) > 0) {
                 $messages = [];
                 foreach ($changed as $socket) {
                     if ($socket === $this->server) {
