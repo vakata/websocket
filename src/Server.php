@@ -82,10 +82,10 @@ class Server
                     } else {
                         $message = $this->receive($socket);
                         if ($message === false) {
-                            $this->disconnect($socket);
                             if (isset($this->callbacks['disconnect'])) {
                                 call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
                             }
+                            $this->disconnect($socket);
                         } else {
                             $messages[] = [
                                 'client' => $this->clients[(int) $socket],
