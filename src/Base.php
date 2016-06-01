@@ -58,6 +58,14 @@ trait Base
             $temp = substr($data, 0, static::$fragmentSize);
             $data = substr($data, static::$fragmentSize);
             $temp = $this->encode($temp, $opcode, $masked, strlen($data) === 0);
+            
+            if (!is_resource($socket) || get_resource_type($socket) !== "stream") {
+                return false;
+            }
+            $meta = stream_get_meta_data($socket);
+            if ($meta['timed_out']) {
+                return false;
+            }
             if (fwrite($socket, $temp) === false) {
                 return false;
             }
