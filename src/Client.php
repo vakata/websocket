@@ -13,7 +13,6 @@ class Client
 
     /**
      * Create an instance.
-     * @method __construct
      * @param  string      $address address to bind to, defaults to `"ws://127.0.0.1:8080"`
      * @param  array       $headers optional array of headers to pass when connecting
      */
@@ -91,7 +90,6 @@ class Client
      * Set a callback to execute when a message arrives.
      * 
      * The callable will receive the message string and the server instance.
-     * @method onMessage
      * @param  callable  $callback the callback
      * @return self
      */
@@ -105,7 +103,6 @@ class Client
      * Set a callback to execute every few milliseconds.
      * 
      * The callable will receive the server instance. If it returns boolean `false` the client will stop listening.
-     * @method onTick
      * @param  callable  $callback the callback
      * @return self
      */
@@ -117,7 +114,6 @@ class Client
     }
     /**
      * Send a message to the server.
-     * @method send
      * @param  string $data   the data to send
      * @param  string $opcode the data opcode, defaults to `"text"`
      * @return bool was the send successful
@@ -128,7 +124,6 @@ class Client
     }
     /**
      * Start listening.
-     * @method run
      */
     public function run()
     {

@@ -18,7 +18,6 @@ class Server
 
     /**
      * Create an instance.
-     * @method __construct
      * @param  string $address where to create the server, defaults to "ws://127.0.0.1:8080"
      * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
      * @param  string $pass    optional password for the PEM certificate
@@ -55,7 +54,6 @@ class Server
 
     /**
      * Start processing requests. This method runs in an infinite loop.
-     * @method run
      */
     public function run()
     {
@@ -105,7 +103,6 @@ class Server
     }
     /**
      * Get an array of all connected clients.
-     * @method getClients
      * @return array     the clients
      */
     public function getClients()
@@ -114,7 +111,6 @@ class Server
     }
     /**
      * Get the server socket.
-     * @method getServer
      * @return resource    the socket
      */
     public function getServer()
@@ -128,7 +124,6 @@ class Server
      *  - an associative array with client data
      *  - the current server instance
      * The callable should return `true` if the client should be allowed to connect or `false` otherwise.
-     * @method validateClient
      * @param  callable       $callback the callback to execute when a client connects
      * @return self
      */
@@ -144,7 +139,6 @@ class Server
      * The callable will receive:
      *  - an associative array with client data
      *  - the current server instance
-     * @method onConnect
      * @param  callable  $callback the callback to execute
      * @return self
      */
@@ -160,7 +154,6 @@ class Server
      * The callable will receive:
      *  - an associative array with client data
      *  - the current server instance
-     * @method onDisconnect
      * @param  callable     $callback the callback
      * @return self
      */
@@ -172,7 +165,6 @@ class Server
     }
     /**
      * Set a callback to execute when a client sends a message.
-     * @method onMessage
      *
      * The callable will receive:
      *  - an associative array with client data
@@ -191,7 +183,6 @@ class Server
      * Set a callback to execute every few milliseconds.
      * 
      * The callable will receive the server instance. If it returns boolean `false` the server will stop listening.
-     * @method onTick
      * @param  callable  $callback the callback
      * @return self
      */

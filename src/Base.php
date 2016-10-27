@@ -34,7 +34,6 @@ trait Base
 
     /**
      * Send data to a socket in clear form (basically fwrite)
-     * @method sendClear
      * @param  resource    &$socket the socket to write to
      * @param  string    $data    the data to send
      * @return bool             was the send successful
@@ -45,7 +44,6 @@ trait Base
     }
     /**
      * Send data to a socket.
-     * @method send
      * @param  resource  &$socket the socket to send to
      * @param  string  $data    the data to send
      * @param  string  $opcode  one of the opcodes (defaults to "text")
@@ -76,7 +74,6 @@ trait Base
     }
     /**
      * Read clear data from a socket (basically a fread).
-     * @method receiveClear
      * @param  resource       &$socket the socket to read from
      * @return string                the data that was read
      */
@@ -102,7 +99,6 @@ trait Base
     }
     /**
      * Read data from a socket (in websocket format)
-     * @method receive
      * @param  resource  &$socket the socket to read from
      * @return string           the read data (decoded)
      */
