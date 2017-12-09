@@ -54,7 +54,7 @@ trait Base
     {
         while (strlen($data)) {
             $temp = substr($data, 0, static::$fragmentSize);
-            $data = substr($data, static::$fragmentSize);
+            $data = strlen($data) < static::$fragmentSize ? '' : substr($data, static::$fragmentSize);
             $temp = $this->encode($temp, $opcode, $masked, strlen($data) === 0);
             
             if (!is_resource($socket) || get_resource_type($socket) !== "stream") {
