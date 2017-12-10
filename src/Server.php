@@ -24,10 +24,7 @@ class Server
      */
     public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null)
     {
-        $addr = parse_url($address);
-        if ($addr === false || !isset($addr['scheme']) || !isset($addr['host']) || !isset($addr['port'])) {
-            throw new WebSocketException('Invalid address');
-        }
+        $addr = $this->parseAddress($address);
 
         $context = stream_context_create();
         if ($cert !== null) {
@@ -52,6 +49,14 @@ class Server
         if ($this->server === false) {
             throw new WebSocketException('Could not create server');
         }
+    }
+    protected function parseAddress(string $address) : array
+    {
+        $addr = parse_url($address);
+        if ($addr === false || !isset($addr['scheme']) || !isset($addr['host']) || !isset($addr['port'])) {
+            throw new WebSocketException('Invalid address');
+        }
+        return $addr;
     }
 
     /**
@@ -198,69 +203,70 @@ class Server
     }
     protected function connect(&$socket) : bool
     {
-        $headers = $this->receiveClear($socket);
-        if (!strlen($headers)) {
-            return false;
-        }
-        $headers = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $headers);
-        $headers = array_filter(explode("\r\n", preg_replace("(\r\n\s+)", ' ', $headers)));
-        $request = explode(' ', array_shift($headers));
-        if (strtoupper($request[0]) !== 'GET') {
-            $this->sendClear($socket, "HTTP/1.1 405 Method Not Allowed\r\n\r\n");
-
-            return false;
-        }
-        $temp = [];
-        foreach ($headers as $header) {
-            $header = explode(':', $header, 2);
-            $temp[trim(strtolower($header[0]))] = trim($header[1]);
-        }
-        $headers = $temp;
-        if (!isset($headers['sec-websocket-key']) ||
-            !isset($headers['upgrade']) ||
-            !isset($headers['connection']) ||
-            strtolower($headers['upgrade']) != 'websocket' ||
-            strpos(strtolower($headers['connection']), 'upgrade') === false
-        ) {
-            $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
-
-            return false;
-        }
-        $cookies = [];
-        if (isset($headers['cookie'])) {
-            $temp = explode(';', $headers['cookie']);
-            foreach ($temp as $v) {
-                $v = explode('=', $v, 2);
-                $cookies[trim($v[0])] = $v[1];
+        try {
+            $headers = $this->receiveClear($socket);
+            if (!strlen($headers)) {
+                return false;
             }
-        }
-        $client = [
-            'socket' => $socket,
-            'headers' => $headers,
-            'resource' => $request[1],
-            'cookies' => $cookies,
-        ];
-        if (isset($this->callbacks['validate']) && !call_user_func($this->callbacks['validate'], $client, $this)) {
-            $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
+            $headers = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $headers);
+            $headers = array_filter(explode("\r\n", preg_replace("(\r\n\s+)", ' ', $headers)));
+            $request = explode(' ', array_shift($headers));
+            if (strtoupper($request[0]) !== 'GET') {
+                $this->sendClear($socket, "HTTP/1.1 405 Method Not Allowed\r\n\r\n");
+                return false;
+            }
+            $temp = [];
+            foreach ($headers as $header) {
+                $header = explode(':', $header, 2);
+                $temp[trim(strtolower($header[0]))] = trim($header[1]);
+            }
+            $headers = $temp;
+            if (!isset($headers['sec-websocket-key']) ||
+                !isset($headers['upgrade']) ||
+                !isset($headers['connection']) ||
+                strtolower($headers['upgrade']) != 'websocket' ||
+                strpos(strtolower($headers['connection']), 'upgrade') === false
+            ) {
+                $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
+                return false;
+            }
+            $cookies = [];
+            if (isset($headers['cookie'])) {
+                $temp = explode(';', $headers['cookie']);
+                foreach ($temp as $v) {
+                    $v = explode('=', $v, 2);
+                    $cookies[trim($v[0])] = $v[1];
+                }
+            }
+            $client = [
+                'socket' => $socket,
+                'headers' => $headers,
+                'resource' => $request[1],
+                'cookies' => $cookies,
+            ];
+            if (isset($this->callbacks['validate']) && !call_user_func($this->callbacks['validate'], $client, $this)) {
+                $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
+                return false;
+            }
 
+            $response = [];
+            $response[] = 'HTTP/1.1 101 WebSocket Protocol Handshake';
+            $response[] = 'Upgrade: WebSocket';
+            $response[] = 'Connection: Upgrade';
+            $response[] = 'Sec-WebSocket-Version: 13';
+            $response[] = 'Sec-WebSocket-Location: '.$this->address;
+            $response[] = 'Sec-WebSocket-Accept: '.base64_encode(sha1($headers['sec-websocket-key'].self::$magic, true));
+            if (isset($headers['origin'])) {
+                $response[] = 'Sec-WebSocket-Origin: '.$headers['origin'];
+            }
+
+            $this->sockets[(int) $socket] = $socket;
+            $this->clients[(int) $socket] = $client;
+
+            return $this->sendClear($socket, implode("\r\n", $response)."\r\n\r\n");
+        } catch (WebSocketException $e) {
             return false;
         }
-
-        $response = [];
-        $response[] = 'HTTP/1.1 101 WebSocket Protocol Handshake';
-        $response[] = 'Upgrade: WebSocket';
-        $response[] = 'Connection: Upgrade';
-        $response[] = 'Sec-WebSocket-Version: 13';
-        $response[] = 'Sec-WebSocket-Location: '.$this->address;
-        $response[] = 'Sec-WebSocket-Accept: '.base64_encode(sha1($headers['sec-websocket-key'].self::$magic, true));
-        if (isset($headers['origin'])) {
-            $response[] = 'Sec-WebSocket-Origin: '.$headers['origin'];
-        }
-
-        $this->sockets[(int) $socket] = $socket;
-        $this->clients[(int) $socket] = $client;
-
-        return $this->sendClear($socket, implode("\r\n", $response)."\r\n\r\n");
     }
     protected function disconnect(&$socket)
     {
