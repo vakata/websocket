@@ -42,7 +42,7 @@ trait Base {
 	 * @return bool             was the send successful
 	 */
 	public
-	function sendClear(&$socket, $data) {
+	function sendClear(&$socket, string $data) {
 		return fwrite($socket, $data) > 0;
 	}
 
@@ -57,7 +57,7 @@ trait Base {
 	 * @return bool           was the send successful
 	 */
 	public
-	function send(&$socket, $data, $opcode = 'text', $masked = FALSE) {
+	function send(&$socket, string $data, string $opcode = 'text', bool $masked = FALSE) {
 		while (strlen($data)) {
 			$temp = substr($data, 0, static::$fragmentSize);
 			$data = substr($data, static::$fragmentSize);
@@ -80,7 +80,7 @@ trait Base {
 	}
 
 	protected
-	function encode($data, $opcode = 'text', $masked = TRUE, $final = TRUE) {
+	function encode($data, string $opcode = 'text', bool $masked = TRUE, bool $final = TRUE) {
 		$length = strlen($data);
 
 		$head = '';

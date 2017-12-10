@@ -24,7 +24,7 @@ class Client {
 	 * @param  array  $headers optional array of headers to pass when connecting
 	 */
 	public
-	function __construct($address = 'ws://127.0.0.1:8080', array $headers = []) {
+	function __construct(string $address = 'ws://127.0.0.1:8080', array $headers = []) {
 		$addr = parse_url($address);
 		if ($addr === FALSE || !isset($addr['host']) || !isset($addr['port'])) {
 			throw new WebSocketException('Invalid address');
@@ -82,7 +82,7 @@ class Client {
 	}
 
 	protected
-	function normalizeHeaders($headers) {
+	function normalizeHeaders(array $headers) {
 		$cleaned = [];
 		foreach ($headers as $name => $value) {
 			if (strncmp($name, 'HTTP_', 5) === 0) {
@@ -138,7 +138,7 @@ class Client {
 	 * @return bool was the send successful
 	 */
 	public
-	function send($data, $opcode = 'text') {
+	function send(string $data, string $opcode = 'text') {
 		return $this->_send($this->socket, $data, $opcode, TRUE);
 	}
 

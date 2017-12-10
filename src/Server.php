@@ -27,7 +27,7 @@ class Server {
 	 * @param  string $pass    optional password for the PEM certificate
 	 */
 	public
-	function __construct($address = 'ws://127.0.0.1:8080', $cert = NULL, $pass = NULL) {
+	function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = NULL, string $pass = NULL) {
 		$addr = parse_url($address);
 		if ($addr === FALSE || !isset($addr['scheme']) || !isset($addr['host']) || !isset($addr['port'])) {
 			throw new WebSocketException('Invalid address');
