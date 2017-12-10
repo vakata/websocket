@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace vakata\WebSocket;
+namespace vakata\websocket;
 
 
 /**
  * Class Server
- * @package vakata\WebSocket
+ * @package vakata\websocket
  */
 class Server {
 	use Base;
@@ -43,7 +43,7 @@ class Server {
 	 * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
 	 * @param  string $pass    optional password for the PEM certificate
 	 *
-	 * @throws \vakata\WebSocket\WebSocketException
+	 * @throws \vakata\websocket\WebSocketException
 	 */
 	public
 	function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = NULL, string $pass = NULL) {

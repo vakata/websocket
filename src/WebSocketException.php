@@ -19,11 +19,11 @@
 
 declare(strict_types=1);
 
-namespace vakata\WebSocket;
+namespace vakata\websocket;
 
 /**
  * WebSocketException to identify thrown exceptions as ours
- * @package vakata\WebSocket
+ * @package vakata\websocket
  */
 class WebSocketException extends \Exception {
 }

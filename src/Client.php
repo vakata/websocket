@@ -19,12 +19,12 @@
 
 declare(strict_types=1);
 
-namespace vakata\WebSocket;
+namespace vakata\websocket;
 
 
 /**
  * A websocket server class.
- * @package vakata\WebSocket
+ * @package vakata\websocket
  */
 class Client {
 	use Base {
@@ -40,7 +40,7 @@ class Client {
 	 * @param  string $address address to bind to, defaults to `"ws://127.0.0.1:8080"`
 	 * @param  array  $headers optional array of headers to pass when connecting
 	 *
-	 * @throws \vakata\WebSocket\WebSocketException
+	 * @throws \vakata\websocket\WebSocketException
 	 */
 	public
 	function __construct(string $address = 'ws://127.0.0.1:8080', array $headers = []) {

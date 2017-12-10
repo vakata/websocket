@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace vakata\WebSocket;
+namespace vakata\websocket;
 
 /**
  * An trait used in both the server and client classes.
