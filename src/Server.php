@@ -1,9 +1,13 @@
 <?php
 
-namespace vakata\websocket;
+declare(strict_types=1);
+
+namespace vakata\WebSocket;
+
 
 /**
- * A websocket server class.
+ * Class Server
+ * @package vakata\WebSocket
  */
 class Server
 {

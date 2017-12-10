@@ -1,7 +1,14 @@
 <?php
 
-namespace vakata\websocket;
+declare(strict_types=1);
 
+namespace vakata\WebSocket;
+
+
+/**
+ * A websocket server class.
+ * @package vakata\WebSocket
+ */
 class Client
 {
     use Base {
@@ -88,7 +95,7 @@ class Client
     }
     /**
      * Set a callback to execute when a message arrives.
-     * 
+     *
      * The callable will receive the message string and the server instance.
      * @param  callable  $callback the callback
      * @return self
@@ -101,7 +108,7 @@ class Client
     }
     /**
      * Set a callback to execute every few milliseconds.
-     * 
+     *
      * The callable will receive the server instance. If it returns boolean `false` the client will stop listening.
      * @param  callable  $callback the callback
      * @return self

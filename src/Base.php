@@ -1,6 +1,8 @@
 <?php
 
-namespace vakata\websocket;
+declare(strict_types=1);
+
+namespace vakata\WebSocket;
 
 /**
  * An trait used in both the server and client classes.
@@ -56,7 +58,7 @@ trait Base
             $temp = substr($data, 0, static::$fragmentSize);
             $data = substr($data, static::$fragmentSize);
             $temp = $this->encode($temp, $opcode, $masked, strlen($data) === 0);
-            
+
             if (!is_resource($socket) || get_resource_type($socket) !== "stream") {
                 return false;
             }
