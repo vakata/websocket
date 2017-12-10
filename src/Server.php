@@ -40,10 +40,12 @@ class Server
         }
 
         $this->address = $address;
+        $ern = null;
+        $ers = null;
         $this->server = @stream_socket_server(
             (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp').'://'.$addr['host'].':'.$addr['port'],
-            $ern = null,
-            $ers = null,
+            $ern,
+            $ers,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
             $context
         );
@@ -60,12 +62,14 @@ class Server
         $this->sockets[] = $this->server;
         while (true) {
             if (isset($this->tick)) {
-                if(call_user_func($this->tick, $this) === false) {
+                if (call_user_func($this->tick, $this) === false) {
                     break;
                 }
             }
             $changed = $this->sockets;
-            if (@stream_select($changed, $write = null, $except = null, (isset($this->tick) ? 0 : null) ) > 0) {
+            $write = null;
+            $except = null;
+            if (@stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null)) > 0) {
                 $messages = [];
                 foreach ($changed as $socket) {
                     if ($socket === $this->server) {
@@ -78,17 +82,17 @@ class Server
                             }
                         }
                     } else {
-                        $message = $this->receive($socket);
-                        if ($message === false) {
-                            if (isset($this->callbacks['disconnect'])) {
-                                call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
-                            }
-                            $this->disconnect($socket);
-                        } else {
+                        try {
+                            $message = $this->receive($socket);
                             $messages[] = [
                                 'client' => $this->clients[(int) $socket],
                                 'message' => $message,
                             ];
+                        } catch (WebSocketException $e) {
+                            if (isset($this->callbacks['disconnect'])) {
+                                call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
+                            }
+                            $this->disconnect($socket);
                         }
                     }
                 }
@@ -135,7 +139,7 @@ class Server
     }
     /**
      * Set a callback to be executed when a client is connected.
-     * 
+     *
      * The callable will receive:
      *  - an associative array with client data
      *  - the current server instance
@@ -150,7 +154,7 @@ class Server
     }
     /**
      * Set a callback to execute when a client disconnects.
-     * 
+     *
      * The callable will receive:
      *  - an associative array with client data
      *  - the current server instance
@@ -181,7 +185,7 @@ class Server
     }
     /**
      * Set a callback to execute every few milliseconds.
-     * 
+     *
      * The callable will receive the server instance. If it returns boolean `false` the server will stop listening.
      * @param  callable  $callback the callback
      * @return self
@@ -192,10 +196,10 @@ class Server
 
         return $this;
     }
-    protected function connect(&$socket)
+    protected function connect(&$socket) : bool
     {
         $headers = $this->receiveClear($socket);
-        if (!$headers) {
+        if (!strlen($headers)) {
             return false;
         }
         $headers = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $headers);

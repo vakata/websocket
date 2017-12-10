@@ -88,7 +88,7 @@ class Client
     }
     /**
      * Set a callback to execute when a message arrives.
-     * 
+     *
      * The callable will receive the message string and the server instance.
      * @param  callable  $callback the callback
      * @return self
@@ -101,7 +101,7 @@ class Client
     }
     /**
      * Set a callback to execute every few milliseconds.
-     * 
+     *
      * The callable will receive the server instance. If it returns boolean `false` the client will stop listening.
      * @param  callable  $callback the callback
      * @return self
@@ -129,16 +129,21 @@ class Client
     {
         while (true) {
             if (isset($this->tick)) {
-                if(call_user_func($this->tick, $this) === false) {
+                if (call_user_func($this->tick, $this) === false) {
                     break;
                 }
             }
             $changed = [$this->socket];
-            if (@stream_select($changed, $write = null, $except = null, null) > 0) {
+            $write = null;
+            $except = null;
+            if (@stream_select($changed, $write, $except, null) > 0) {
                 foreach ($changed as $socket) {
-                    $message = $this->receive($socket);
-                    if ($message !== false && isset($this->message)) {
-                        call_user_func($this->message, $message, $this);
+                    try {
+                        $message = $this->receive($socket);
+                        if (isset($this->message)) {
+                            call_user_func($this->message, $message, $this);
+                        }
+                    } catch (WebSocketException $ignore) {
                     }
                 }
             }

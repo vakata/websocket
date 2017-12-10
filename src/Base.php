@@ -38,7 +38,7 @@ trait Base
      * @param  string    $data    the data to send
      * @return bool             was the send successful
      */
-    public function sendClear(&$socket, $data)
+    public function sendClear(&$socket, $data) : bool
     {
         return fwrite($socket, $data) > 0;
     }
@@ -77,14 +77,14 @@ trait Base
      * @param  resource       &$socket the socket to read from
      * @return string                the data that was read
      */
-    public function receiveClear(&$socket)
+    public function receiveClear(&$socket) : string
     {
         $data = '';
         $read = static::$fragmentSize;
         do {
             $buff = fread($socket, $read);
             if ($buff === false) {
-                return false;
+                return '';
             }
             $data .= $buff;
             $meta = stream_get_meta_data($socket);
@@ -102,14 +102,14 @@ trait Base
      * @param  resource  &$socket the socket to read from
      * @return string           the read data (decoded)
      */
-    public function receive(&$socket)
+    public function receive(&$socket) : string
     {
         $data = fread($socket, 2);
         if (strlen($data) === 1) {
             $data .= fread($socket, 1);
         }
         if ($data === false || strlen($data) < 2) {
-            return false;
+            throw new WebSocketException('Could not receive data');
         }
         $final = (bool) (ord($data[0]) & 1 << 7);
         $rsv1 = (bool) (ord($data[0]) & 1 << 6);
@@ -123,7 +123,7 @@ trait Base
         if ($length > 125) {
             $temp = $length === 126 ? fread($socket, 2) : fread($socket, 8);
             if ($temp === false) {
-                return false;
+                throw new WebSocketException('Could not receive data');
             }
             $length = '';
             for ($i = 0; $i < strlen($temp); ++$i) {
@@ -131,11 +131,11 @@ trait Base
             }
             $length = bindec($length);
         }
-
+        $mask = '';
         if ($masked) {
             $mask = fread($socket, 4);
             if ($mask === false) {
-                return false;
+                throw new WebSocketException('Could not receive mask data');
             }
         }
         if ($length > 0) {
@@ -143,7 +143,7 @@ trait Base
             do {
                 $buff = fread($socket, min($length, static::$fragmentSize));
                 if ($buff === false) {
-                    return false;
+                    throw new WebSocketException('Could not receive data');
                 }
                 $temp .= $buff;
             } while (strlen($temp) < $length);
@@ -157,10 +157,10 @@ trait Base
         }
 
         if ($opcode === static::$opcodes['close']) {
-            return false;
+            throw new WebSocketException('Client disconnect');
         }
 
-        return $final ? $payload : $payload.$this->receive($socket, true);
+        return $final ? $payload : $payload.$this->receive($socket);
     }
 
     protected function encode($data, $opcode = 'text', $masked = true, $final = true)
@@ -186,8 +186,8 @@ trait Base
         foreach (str_split($head, 8) as $binstr) {
             $frame .= chr(bindec($binstr));
         }
+        $mask = '';
         if ($masked) {
-            $mask = '';
             for ($i = 0; $i < 4; ++$i) {
                 $mask .= chr(rand(0, 255));
             }
