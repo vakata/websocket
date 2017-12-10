@@ -108,6 +108,9 @@ trait Base
     public function receive(&$socket) : string
     {
         $data = fread($socket, 2);
+        if ($data === false) {
+            throw new WebSocketException('Could not receive data');
+        }
         if (strlen($data) === 1) {
             $data .= fread($socket, 1);
         }
@@ -187,7 +190,7 @@ trait Base
 
         $frame = '';
         foreach (str_split($head, 8) as $binstr) {
-            $frame .= chr(bindec($binstr));
+            $frame .= chr((int)bindec($binstr));
         }
         $mask = '';
         if ($masked) {
