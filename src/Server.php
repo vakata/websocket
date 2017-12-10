@@ -25,6 +25,8 @@ class Server {
 	 * @param  string $address where to create the server, defaults to "ws://127.0.0.1:8080"
 	 * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
 	 * @param  string $pass    optional password for the PEM certificate
+	 *
+	 * @throws \vakata\WebSocket\WebSocketException
 	 */
 	public
 	function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = NULL, string $pass = NULL) {
@@ -44,7 +46,7 @@ class Server {
 		}
 
 		$this->address = $address;
-		$this->server  = @stream_socket_server(
+		$this->server  = @stream_socket_server( // TODO: instead of @ catch this!
 			(in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp') . '://' . $addr['host'] . ':' . $addr['port'],
 			$ern = NULL,
 			$ers = NULL,
@@ -69,6 +71,7 @@ class Server {
 				}
 			}
 			$changed = $this->sockets;
+			//TODO: catch this!
 			if (@stream_select($changed, $write = NULL, $except = NULL, (isset($this->tick) ? 0 : NULL)) > 0) {
 				$messages = [];
 				foreach ($changed as $socket) {
@@ -106,6 +109,11 @@ class Server {
 		}
 	}
 
+	/**
+	 * @param $socket
+	 *
+	 * @return bool
+	 */
 	protected
 	function connect(&$socket) {
 		$headers = $this->receiveClear($socket);
@@ -174,6 +182,9 @@ class Server {
 		return $this->sendClear($socket, implode("\r\n", $response) . "\r\n\r\n");
 	}
 
+	/**
+	 * @param $socket
+	 */
 	protected
 	function disconnect(&$socket) {
 		unset($this->clients[ (int)$socket ], $this->sockets[ (int)$socket ], $socket);

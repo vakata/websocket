@@ -79,15 +79,23 @@ trait Base {
 		return TRUE;
 	}
 
+	/**
+	 * @param        $data
+	 * @param string $opcode
+	 * @param bool   $masked
+	 * @param bool   $final
+	 *
+	 * @return string
+	 */
 	protected
 	function encode($data, string $opcode = 'text', bool $masked = TRUE, bool $final = TRUE) {
 		$length = strlen($data);
 
 		$head = '';
-		$head .= (bool)$final ? '1' : '0';
+		$head .= $final ? '1' : '0';
 		$head .= '000';
 		$head .= sprintf('%04b', static::$opcodes[ $opcode ]);
-		$head .= (bool)$masked ? '1' : '0';
+		$head .= $masked ? '1' : '0';
 		if ($length > 65535) {
 			$head .= decbin(127);
 			$head .= sprintf('%064b', $length);
@@ -110,7 +118,7 @@ trait Base {
 			$frame .= $mask;
 		}
 		for ($i = 0; $i < $length; ++$i) {
-			$frame .= ($masked === TRUE) ? $data[ $i ] ^ $mask[ $i % 4 ] : $data[ $i ];
+			$frame .= ($masked) ? $data[ $i ] ^ $mask[ $i % 4 ] : $data[ $i ];
 		}
 
 		return $frame;
@@ -161,8 +169,8 @@ trait Base {
 			return FALSE;
 		}
 		$final  = (bool)(ord($data[0]) & 1 << 7);
-		$rsv1   = (bool)(ord($data[0]) & 1 << 6);
-		$rsv2   = (bool)(ord($data[0]) & 1 << 5);
+		$rsv1   = (bool)(ord($data[0]) & 1 << 6); //TODO: implement RSV check!
+		$rsv2   = (bool)(ord($data[0]) & 1 << 5); //TODO: these three are unused!
 		$rsv3   = (bool)(ord($data[0]) & 1 << 4);
 		$opcode = ord($data[0]) & 31;
 		$masked = (bool)(ord($data[1]) >> 7);
@@ -209,6 +217,6 @@ trait Base {
 			return FALSE;
 		}
 
-		return $final ? $payload : $payload . $this->receive($socket, TRUE);
+		return $final ? $payload : $payload . $this->receive($socket);
 	}
 }

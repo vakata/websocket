@@ -22,6 +22,8 @@ class Client {
 	 *
 	 * @param  string $address address to bind to, defaults to `"ws://127.0.0.1:8080"`
 	 * @param  array  $headers optional array of headers to pass when connecting
+	 *
+	 * @throws \vakata\WebSocket\WebSocketException
 	 */
 	public
 	function __construct(string $address = 'ws://127.0.0.1:8080', array $headers = []) {
@@ -69,6 +71,9 @@ class Client {
 		}
 	}
 
+	/**
+	 * @return string
+	 */
 	protected
 	function generateKey() {
 		$chars        = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
@@ -81,6 +86,11 @@ class Client {
 		return base64_encode($key);
 	}
 
+	/**
+	 * @param array $headers
+	 *
+	 * @return array
+	 */
 	protected
 	function normalizeHeaders(array $headers) {
 		$cleaned = [];
@@ -154,6 +164,7 @@ class Client {
 				}
 			}
 			$changed = [$this->socket];
+			//TODO: catch this!
 			if (@stream_select($changed, $write = NULL, $except = NULL, NULL) > 0) {
 				foreach ($changed as $socket) {
 					$message = $this->receive($socket);
