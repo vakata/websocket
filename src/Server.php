@@ -22,7 +22,7 @@ class Server
      * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
      * @param  string $pass    optional password for the PEM certificate
      */
-    public function __construct($address = 'ws://127.0.0.1:8080', $cert = null, $pass = null)
+    public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null)
     {
         $addr = parse_url($address);
         if ($addr === false || !isset($addr['scheme']) || !isset($addr['host']) || !isset($addr['port'])) {
@@ -30,11 +30,11 @@ class Server
         }
 
         $context = stream_context_create();
-        if ($cert) {
+        if ($cert !== null) {
             stream_context_set_option($context, 'ssl', 'allow_self_signed', true);
             stream_context_set_option($context, 'ssl', 'verify_peer', false);
             stream_context_set_option($context, 'ssl', 'local_cert', $cert);
-            if ($pass) {
+            if ($pass !== null) {
                 stream_context_set_option($context, 'ssl', 'passphrase', $pass);
             }
         }
@@ -67,8 +67,8 @@ class Server
                 }
             }
             $changed = $this->sockets;
-            $write = null;
-            $except = null;
+            $write = [];
+            $except = [];
             if (@stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null)) > 0) {
                 $messages = [];
                 foreach ($changed as $socket) {
@@ -109,7 +109,7 @@ class Server
      * Get an array of all connected clients.
      * @return array     the clients
      */
-    public function getClients()
+    public function getClients() : array
     {
         return $this->clients;
     }
@@ -129,9 +129,9 @@ class Server
      *  - the current server instance
      * The callable should return `true` if the client should be allowed to connect or `false` otherwise.
      * @param  callable       $callback the callback to execute when a client connects
-     * @return self
+     * @return $this
      */
-    public function validateClient(callable $callback)
+    public function validateClient(callable $callback) : Server
     {
         $this->callbacks['validate'] = $callback;
 
@@ -144,9 +144,9 @@ class Server
      *  - an associative array with client data
      *  - the current server instance
      * @param  callable  $callback the callback to execute
-     * @return self
+     * @return $this
      */
-    public function onConnect(callable $callback)
+    public function onConnect(callable $callback) : Server
     {
         $this->callbacks['connect'] = $callback;
 
@@ -159,9 +159,9 @@ class Server
      *  - an associative array with client data
      *  - the current server instance
      * @param  callable     $callback the callback
-     * @return self
+     * @return $this
      */
-    public function onDisconnect(callable $callback)
+    public function onDisconnect(callable $callback) : Server
     {
         $this->callbacks['disconnect'] = $callback;
 
@@ -175,9 +175,9 @@ class Server
      *  - the message string
      *  - the current server instance
      * @param  callable  $callback the callback
-     * @return self
+     * @return $this
      */
-    public function onMessage(callable $callback)
+    public function onMessage(callable $callback) : Server
     {
         $this->callbacks['message'] = $callback;
 
@@ -188,9 +188,9 @@ class Server
      *
      * The callable will receive the server instance. If it returns boolean `false` the server will stop listening.
      * @param  callable  $callback the callback
-     * @return self
+     * @return $this
      */
-    public function onTick(callable $callback)
+    public function onTick(callable $callback) : Server
     {
         $this->tick = $callback;
 

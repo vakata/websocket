@@ -78,10 +78,12 @@ class Client
             if (strncmp($name, 'HTTP_', 5) === 0) {
                 $name = substr($name, 5);
             }
-            $name = str_replace('_', ' ', strtolower($name));
-            $name = str_replace('-', ' ', strtolower($name));
-            $name = str_replace(' ', '-', ucwords($name));
-            $cleaned[$name] = $value;
+            if ($name !== false) {
+                $name = str_replace('_', ' ', strtolower($name));
+                $name = str_replace('-', ' ', strtolower($name));
+                $name = str_replace(' ', '-', ucwords($name));
+                $cleaned[$name] = $value;
+            }
         }
 
         return $cleaned;
@@ -134,8 +136,8 @@ class Client
                 }
             }
             $changed = [$this->socket];
-            $write = null;
-            $except = null;
+            $write = [];
+            $except = [];
             if (@stream_select($changed, $write, $except, null) > 0) {
                 foreach ($changed as $socket) {
                     try {
