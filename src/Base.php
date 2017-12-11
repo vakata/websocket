@@ -39,7 +39,7 @@ trait Base
      * @param  string    $data    the data to send
      * @return bool             was the send successful
      */
-    public function sendClear(&$socket, $data) : bool
+    public function sendClear(&$socket, string $data) : bool
     {
         return fwrite($socket, $data) > 0;
     }
@@ -51,7 +51,7 @@ trait Base
      * @param  boolean $masked  should the data be masked (per specs the server should not mask, defaults to false)
      * @return bool           was the send successful
      */
-    public function send(&$socket, $data, $opcode = 'text', $masked = false)
+    public function send(&$socket, string $data, string $opcode = 'text', bool $masked = false)
     {
         while (strlen($data)) {
             $temp = substr($data, 0, static::$fragmentSize);
@@ -177,22 +177,22 @@ trait Base
     /**
      * Encode our data.
      *
-     * @param        $data
-     * @param string $opcode
-     * @param bool   $masked
-     * @param bool   $final
+     * @param string $data   the data to send
+     * @param string $opcode one of the opcodes (defaults to "text")
+     * @param bool   $masked should the data be masked (per specs the server should not mask, defaults to false)
+     * @param bool   $final  whether this is the final packet
      *
      * @return string
      */
-    protected function encode($data, $opcode = 'text', $masked = true, $final = true)
+    protected function encode(string $data, string $opcode = 'text', bool $masked = true, bool $final = true)
     {
         $length = strlen($data);
 
         $head = '';
-        $head .= (bool) $final ? '1' : '0';
+        $head .= $final ? '1' : '0';
         $head .= '000';
         $head .= sprintf('%04b', static::$opcodes[$opcode]);
-        $head .= (bool) $masked ? '1' : '0';
+        $head .= $masked ? '1' : '0';
         if ($length > 65535) {
             $head .= decbin(127);
             $head .= sprintf('%064b', $length);

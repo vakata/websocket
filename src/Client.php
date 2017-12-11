@@ -25,7 +25,7 @@ class Client
      *
      * @throws WebSocketException
      */
-    public function __construct($address = 'ws://127.0.0.1:8080', array $headers = [])
+    public function __construct(string $address = 'ws://127.0.0.1:8080', array $headers = [])
     {
         $addr = parse_url($address);
         if ($addr === false || !isset($addr['host']) || !isset($addr['port'])) {
@@ -94,7 +94,7 @@ class Client
      *
      * @return array
      */
-    protected function normalizeHeaders($headers)
+    protected function normalizeHeaders(array $headers)
     {
         $cleaned = [];
         foreach ($headers as $name => $value) {
@@ -143,7 +143,7 @@ class Client
      * @param  string $opcode the data opcode, defaults to `"text"`
      * @return bool was the send successful
      */
-    public function send($data, $opcode = 'text')
+    public function send(string $data, string $opcode = 'text')
     {
         return $this->_send($this->socket, $data, $opcode, true);
     }
