@@ -101,10 +101,14 @@ trait Base
 
         return $data;
     }
+
     /**
      * Read data from a socket (in websocket format)
-     * @param  resource  &$socket the socket to read from
+     *
+     * @param  resource &$socket the socket to read from
+     *
      * @return string           the read data (decoded)
+     * @throws WebSocketException
      */
     public function receive(&$socket) : string
     {
@@ -119,9 +123,9 @@ trait Base
             throw new WebSocketException('Could not receive data');
         }
         $final = (bool) (ord($data[0]) & 1 << 7);
-        $rsv1 = (bool) (ord($data[0]) & 1 << 6);
-        $rsv2 = (bool) (ord($data[0]) & 1 << 5);
-        $rsv3 = (bool) (ord($data[0]) & 1 << 4);
+        //$rsv1 = (bool) (ord($data[0]) & 1 << 6);
+        //$rsv2 = (bool) (ord($data[0]) & 1 << 5);
+        //$rsv3 = (bool) (ord($data[0]) & 1 << 4);
         $opcode = ord($data[0]) & 31;
         $masked = (bool) (ord($data[1]) >> 7);
 
@@ -170,6 +174,16 @@ trait Base
         return $final ? $payload : $payload.$this->receive($socket);
     }
 
+    /**
+     * Encode our data.
+     *
+     * @param        $data
+     * @param string $opcode
+     * @param bool   $masked
+     * @param bool   $final
+     *
+     * @return string
+     */
     protected function encode($data, $opcode = 'text', $masked = true, $final = true)
     {
         $length = strlen($data);

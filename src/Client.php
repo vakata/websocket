@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 namespace vakata\websocket;
 
+/**
+ * Class Client
+ *
+ * @package vakata\websocket
+ */
 class Client
 {
     use Base {
@@ -14,8 +19,11 @@ class Client
 
     /**
      * Create an instance.
-     * @param  string      $address address to bind to, defaults to `"ws://127.0.0.1:8080"`
-     * @param  array       $headers optional array of headers to pass when connecting
+     *
+     * @param  string $address address to bind to, defaults to `"ws://127.0.0.1:8080"`
+     * @param  array  $headers optional array of headers to pass when connecting
+     *
+     * @throws WebSocketException
      */
     public function __construct($address = 'ws://127.0.0.1:8080', array $headers = [])
     {
@@ -61,6 +69,12 @@ class Client
             throw new WebSocketException('Bad key');
         }
     }
+
+    /**
+     * Key generation for header generation and handshakes.
+     *
+     * @return string
+     */
     protected function generateKey()
     {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
@@ -72,6 +86,14 @@ class Client
 
         return base64_encode($key);
     }
+
+    /**
+     * Cleanup given headers.
+     *
+     * @param array $headers
+     *
+     * @return array
+     */
     protected function normalizeHeaders($headers)
     {
         $cleaned = [];

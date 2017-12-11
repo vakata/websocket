@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace vakata\websocket;
 
 /**
- * A websocket server class.
+ * Class Server
+ *
+ * @package vakata\websocket
  */
 class Server
 {
     use Base;
-    
+
     protected $address = '';
     protected $server = null;
     protected $sockets = [];
@@ -19,9 +21,12 @@ class Server
 
     /**
      * Create an instance.
+     *
      * @param  string $address where to create the server, defaults to "ws://127.0.0.1:8080"
      * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
      * @param  string $pass    optional password for the PEM certificate
+     *
+     * @throws WebSocketException
      */
     public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null)
     {
@@ -197,6 +202,14 @@ class Server
 
         return $this;
     }
+
+    /**
+     * Connects a socket.
+     *
+     * @param resource $socket The socket to connect.
+     *
+     * @return bool
+     */
     protected function connect(&$socket) : bool
     {
         $headers = $this->receiveClear($socket);
@@ -263,6 +276,12 @@ class Server
 
         return $this->sendClear($socket, implode("\r\n", $response)."\r\n\r\n");
     }
+
+    /**
+     * Disconnects a socket.
+     *
+     * @param resource $socket The socket to disconnect.
+     */
     protected function disconnect(&$socket)
     {
         unset($this->clients[(int) $socket], $this->sockets[(int) $socket], $socket);
