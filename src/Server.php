@@ -48,7 +48,7 @@ class Server
         $this->address = $address;
         $ern = null;
         $ers = null;
-        $this->server = @stream_socket_server(
+        $this->server = stream_socket_server(
             (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp').'://'.$addr['host'].':'.$addr['port'],
             $ern,
             $ers,
@@ -62,6 +62,8 @@ class Server
 
     /**
      * Start processing requests. This method runs in an infinite loop.
+     *
+     * @throws WebSocketException
      */
     public function run()
     {
@@ -75,7 +77,10 @@ class Server
             $changed = $this->sockets;
             $write = [];
             $except = [];
-            if (@stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null)) > 0) {
+            $changedNum = stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null));
+            if (false === $changedNum) {
+                throw new WebSocketException('Could not select streams.');
+            } elseif ($changedNum > 0) {
                 $messages = [];
                 foreach ($changed as $socket) {
                     if ($socket === $this->server) {

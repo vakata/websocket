@@ -147,8 +147,11 @@ class Client
     {
         return $this->_send($this->socket, $data, $opcode, true);
     }
+
     /**
      * Start listening.
+     *
+     * @throws WebSocketException
      */
     public function run()
     {
@@ -161,7 +164,10 @@ class Client
             $changed = [$this->socket];
             $write = [];
             $except = [];
-            if (@stream_select($changed, $write, $except, null) > 0) {
+            $changedNum = stream_select($changed, $write, $except, null);
+            if (false === $changedNum) {
+                throw new WebSocketException('Could not select streams.');
+            } elseif ($changedNum > 0) {
                 foreach ($changed as $socket) {
                     try {
                         $message = $this->receive($socket);
