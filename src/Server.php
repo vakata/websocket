@@ -49,7 +49,7 @@ class Server
         $ern = null;
         $ers = null;
         $this->server = stream_socket_server(
-            (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp').'://'.$addr['host'].':'.$addr['port'],
+            (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp') . '://' . $addr['host'] . ':' . $addr['port'],
             $ern,
             $ers,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
@@ -88,7 +88,7 @@ class Server
                         if ($temp !== false) {
                             if ($this->connect($temp)) {
                                 if (isset($this->callbacks['connect'])) {
-                                    call_user_func($this->callbacks['connect'], $this->clients[(int) $temp], $this);
+                                    call_user_func($this->callbacks['connect'], $this->clients[(int)$temp], $this);
                                 }
                             }
                         }
@@ -96,12 +96,12 @@ class Server
                         try {
                             $message = $this->receive($socket);
                             $messages[] = [
-                                'client' => $this->clients[(int) $socket],
+                                'client' => $this->clients[(int)$socket],
                                 'message' => $message,
                             ];
                         } catch (WebSocketException $e) {
                             if (isset($this->callbacks['disconnect'])) {
-                                call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
+                                call_user_func($this->callbacks['disconnect'], $this->clients[(int)$socket], $this);
                             }
                             $this->disconnect($socket);
                         }
@@ -116,97 +116,6 @@ class Server
             usleep(5000);
         }
     }
-    /**
-     * Get an array of all connected clients.
-     * @return array     the clients
-     */
-    public function getClients() : array
-    {
-        return $this->clients;
-    }
-    /**
-     * Get the server socket.
-     * @return resource    the socket
-     */
-    public function getServer()
-    {
-        return $this->server;
-    }
-    /**
-     * Set a callback to be executed when a client connects, returning `false` will prevent the client from connecting.
-     *
-     * The callable will receive:
-     *  - an associative array with client data
-     *  - the current server instance
-     * The callable should return `true` if the client should be allowed to connect or `false` otherwise.
-     * @param  callable       $callback the callback to execute when a client connects
-     * @return $this
-     */
-    public function validateClient(callable $callback) : Server
-    {
-        $this->callbacks['validate'] = $callback;
-
-        return $this;
-    }
-    /**
-     * Set a callback to be executed when a client is connected.
-     *
-     * The callable will receive:
-     *  - an associative array with client data
-     *  - the current server instance
-     * @param  callable  $callback the callback to execute
-     * @return $this
-     */
-    public function onConnect(callable $callback) : Server
-    {
-        $this->callbacks['connect'] = $callback;
-
-        return $this;
-    }
-    /**
-     * Set a callback to execute when a client disconnects.
-     *
-     * The callable will receive:
-     *  - an associative array with client data
-     *  - the current server instance
-     * @param  callable     $callback the callback
-     * @return $this
-     */
-    public function onDisconnect(callable $callback) : Server
-    {
-        $this->callbacks['disconnect'] = $callback;
-
-        return $this;
-    }
-    /**
-     * Set a callback to execute when a client sends a message.
-     *
-     * The callable will receive:
-     *  - an associative array with client data
-     *  - the message string
-     *  - the current server instance
-     * @param  callable  $callback the callback
-     * @return $this
-     */
-    public function onMessage(callable $callback) : Server
-    {
-        $this->callbacks['message'] = $callback;
-
-        return $this;
-    }
-    /**
-     * Set a callback to execute every few milliseconds.
-     *
-     * The callable will receive the server instance. If it returns boolean `false` the server will stop listening.
-     * @param  callable  $callback the callback
-     * @return $this
-     */
-    public function onTick(callable $callback) : Server
-    {
-        $this->tick = $callback;
-
-        return $this;
-    }
 
     /**
      * Connects a socket.
@@ -215,7 +124,7 @@ class Server
      *
      * @return bool
      */
-    protected function connect(&$socket) : bool
+    protected function connect(&$socket): bool
     {
         $headers = $this->receiveClear($socket);
         if (!strlen($headers)) {
@@ -270,16 +179,17 @@ class Server
         $response[] = 'Upgrade: WebSocket';
         $response[] = 'Connection: Upgrade';
         $response[] = 'Sec-WebSocket-Version: 13';
-        $response[] = 'Sec-WebSocket-Location: '.$this->address;
-        $response[] = 'Sec-WebSocket-Accept: '.base64_encode(sha1($headers['sec-websocket-key'].self::$magic, true));
+        $response[] = 'Sec-WebSocket-Location: ' . $this->address;
+        $response[] = 'Sec-WebSocket-Accept: ' .
+            base64_encode(sha1($headers['sec-websocket-key'] . self::$magic, true));
         if (isset($headers['origin'])) {
-            $response[] = 'Sec-WebSocket-Origin: '.$headers['origin'];
+            $response[] = 'Sec-WebSocket-Origin: ' . $headers['origin'];
         }
 
-        $this->sockets[(int) $socket] = $socket;
-        $this->clients[(int) $socket] = $client;
+        $this->sockets[(int)$socket] = $socket;
+        $this->clients[(int)$socket] = $client;
 
-        return $this->sendClear($socket, implode("\r\n", $response)."\r\n\r\n");
+        return $this->sendClear($socket, implode("\r\n", $response) . "\r\n\r\n");
     }
 
     /**
@@ -289,6 +199,116 @@ class Server
      */
     protected function disconnect(&$socket)
     {
-        unset($this->clients[(int) $socket], $this->sockets[(int) $socket], $socket);
+        unset($this->clients[(int)$socket], $this->sockets[(int)$socket], $socket);
+    }
+
+    /**
+     * Get an array of all connected clients.
+     *
+     * @return array     the clients
+     */
+    public function getClients(): array
+    {
+        return $this->clients;
+    }
+
+    /**
+     * Get the server socket.
+     *
+     * @return resource    the socket
+     */
+    public function getServer()
+    {
+        return $this->server;
+    }
+
+    /**
+     * Set a callback to be executed when a client connects, returning `false` will prevent the client from connecting.
+     *
+     * The callable will receive:
+     *  - an associative array with client data
+     *  - the current server instance
+     * The callable should return `true` if the client should be allowed to connect or `false` otherwise.
+     *
+     * @param  callable $callback the callback to execute when a client connects
+     *
+     * @return $this
+     */
+    public function validateClient(callable $callback): Server
+    {
+        $this->callbacks['validate'] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Set a callback to be executed when a client is connected.
+     *
+     * The callable will receive:
+     *  - an associative array with client data
+     *  - the current server instance
+     *
+     * @param  callable $callback the callback to execute
+     *
+     * @return $this
+     */
+    public function onConnect(callable $callback): Server
+    {
+        $this->callbacks['connect'] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Set a callback to execute when a client disconnects.
+     *
+     * The callable will receive:
+     *  - an associative array with client data
+     *  - the current server instance
+     *
+     * @param  callable $callback the callback
+     *
+     * @return $this
+     */
+    public function onDisconnect(callable $callback): Server
+    {
+        $this->callbacks['disconnect'] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Set a callback to execute when a client sends a message.
+     *
+     * The callable will receive:
+     *  - an associative array with client data
+     *  - the message string
+     *  - the current server instance
+     *
+     * @param  callable $callback the callback
+     *
+     * @return $this
+     */
+    public function onMessage(callable $callback): Server
+    {
+        $this->callbacks['message'] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Set a callback to execute every few milliseconds.
+     *
+     * The callable will receive the server instance. If it returns boolean `false` the server will stop listening.
+     *
+     * @param  callable $callback the callback
+     *
+     * @return $this
+     */
+    public function onTick(callable $callback): Server
+    {
+        $this->tick = $callback;
+
+        return $this;
     }
 }

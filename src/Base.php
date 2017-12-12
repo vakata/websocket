@@ -12,43 +12,51 @@ trait Base
 {
     /**
      * all available opcodes
+     *
      * @var array
      */
     protected static $opcodes = [
         'continuation' => 0,
-        'text' => 1,
-        'binary' => 2,
-        'close' => 8,
-        'ping' => 9,
-        'pong' => 10,
+        'text'         => 1,
+        'binary'       => 2,
+        'close'        => 8,
+        'ping'         => 9,
+        'pong'         => 10,
     ];
     /**
      * buffer size for all operations in bytes (defaults to 4096)
+     *
      * @var integer
      */
     protected static $fragmentSize = 4096;
     /**
      * the magic key used to generate websocket keys (per specs)
+     *
      * @var string
      */
     protected static $magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
     /**
      * Send data to a socket in clear form (basically fwrite)
-     * @param  resource    &$socket the socket to write to
-     * @param  string    $data    the data to send
+     *
+     * @param  resource &$socket the socket to write to
+     * @param  string   $data    the data to send
+     *
      * @return bool             was the send successful
      */
-    public function sendClear(&$socket, string $data) : bool
+    public function sendClear(&$socket, string $data): bool
     {
         return fwrite($socket, $data) > 0;
     }
+
     /**
      * Send data to a socket.
-     * @param  resource  &$socket the socket to send to
-     * @param  string  $data    the data to send
-     * @param  string  $opcode  one of the opcodes (defaults to "text")
-     * @param  boolean $masked  should the data be masked (per specs the server should not mask, defaults to false)
+     *
+     * @param  resource &$socket the socket to send to
+     * @param  string   $data    the data to send
+     * @param  string   $opcode  one of the opcodes (defaults to "text")
+     * @param  boolean  $masked  should the data be masked (per specs the server should not mask, defaults to false)
+     *
      * @return bool           was the send successful
      */
     public function send(&$socket, string $data, string $opcode = 'text', bool $masked = false)
@@ -60,7 +68,7 @@ trait Base
                 $data = '';
             }
             $temp = $this->encode($temp, $opcode, $masked, strlen($data) === 0);
-            
+
             if (!is_resource($socket) || get_resource_type($socket) !== "stream") {
                 return false;
             }
@@ -76,12 +84,15 @@ trait Base
 
         return true;
     }
+
     /**
      * Read clear data from a socket (basically a fread).
-     * @param  resource       &$socket the socket to read from
+     *
+     * @param  resource &$socket the socket to read from
+     *
      * @return string                the data that was read
      */
-    public function receiveClear(&$socket) : string
+    public function receiveClear(&$socket): string
     {
         $data = '';
         $read = static::$fragmentSize;
@@ -92,9 +103,9 @@ trait Base
             }
             $data .= $buff;
             $meta = stream_get_meta_data($socket);
-            $read = min((int) $meta['unread_bytes'], static::$fragmentSize);
+            $read = min((int)$meta['unread_bytes'], static::$fragmentSize);
             usleep(1000);
-        } while (!feof($socket) && (int) $meta['unread_bytes'] > 0);
+        } while (!feof($socket) && (int)$meta['unread_bytes'] > 0);
         if (strlen($data) === 1) {
             $data .= $this->receiveClear($socket);
         }
@@ -110,7 +121,7 @@ trait Base
      * @return string           the read data (decoded)
      * @throws WebSocketException
      */
-    public function receive(&$socket) : string
+    public function receive(&$socket): string
     {
         $data = fread($socket, 2);
         if ($data === false) {
@@ -122,15 +133,15 @@ trait Base
         if ($data === false || strlen($data) < 2) {
             throw new WebSocketException('Could not receive data');
         }
-        $final = (bool) (ord($data[0]) & 1 << 7);
+        $final = (bool)(ord($data[0]) & 1 << 7);
         //$rsv1 = (bool) (ord($data[0]) & 1 << 6);
         //$rsv2 = (bool) (ord($data[0]) & 1 << 5);
         //$rsv3 = (bool) (ord($data[0]) & 1 << 4);
         $opcode = ord($data[0]) & 31;
-        $masked = (bool) (ord($data[1]) >> 7);
+        $masked = (bool)(ord($data[1]) >> 7);
 
         $payload = '';
-        $length = (int) (ord($data[1]) & 127); // Bits 1-7 in byte 1
+        $length  = (int)(ord($data[1]) & 127); // Bits 1-7 in byte 1
         if ($length > 125) {
             $temp = $length === 126 ? fread($socket, 2) : fread($socket, 8);
             if ($temp === false) {
@@ -171,7 +182,7 @@ trait Base
             throw new WebSocketException('Client disconnect');
         }
 
-        return $final ? $payload : $payload.$this->receive($socket);
+        return $final ? $payload : $payload . $this->receive($socket);
     }
 
     /**
@@ -179,7 +190,7 @@ trait Base
      *
      * @param string $data   the data to send
      * @param string $opcode one of the opcodes (defaults to "text")
-     * @param bool   $masked should the data be masked (per specs the server should not mask, defaults to false)
+     * @param bool   $masked should the data be masked
      * @param bool   $final  whether this is the final packet
      *
      * @return string
