@@ -16,8 +16,8 @@ final class Connection
         Base::encode as private;
         Base::receive as private;
         Base::receiveClear as private;
-
     }
+
     protected $socket;
     protected $header;
     protected $request;

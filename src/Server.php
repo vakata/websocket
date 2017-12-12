@@ -83,8 +83,9 @@ abstract class Server
                     if ($socket === $this->server) {
                         $temp = stream_socket_accept($this->server);
                         if ($temp !== false) {
-                            if ($this->connect($temp)) {
-                                $this->onConnect($this->connections[$id]);
+                            $conn = $this->connect($temp);
+                            if ($conn instanceof Connection) {
+                                $this->onConnect($conn);
                             }
                         }
                     } else {
@@ -109,18 +110,20 @@ abstract class Server
     }
 
     /**
+     * Return false if you want to stop the server.
+     *
      * @return bool
      */
     abstract protected function onTick(): bool;
 
     /**
-     * Connects a socket.
+     * Connects a socket. Returns connection object on success.
      *
      * @param resource $socket The socket to connect.
      *
-     * @return bool
+     * @return Connection|bool
      */
-    protected function connect(&$socket): bool
+    protected function connect(&$socket)
     {
         $headers = $this->receiveClear($socket);
         if (!strlen($headers)) {
@@ -177,35 +180,37 @@ abstract class Server
             $response[] = 'Sec-WebSocket-Origin: ' . $headers['origin'];
         }
 
-        $this->connections[]             = $client;
-        $this->sockets[$client->getID()] = $socket;
+        $this->connections[$client->getID()] = $client;
+        $this->sockets[$client->getID()]     = $socket;
 
-        return $this->sendClear($socket, implode("\r\n", $response) . "\r\n\r\n");
+        $success = $this->sendClear($socket, implode("\r\n", $response) . "\r\n\r\n");
+
+        return $success ? $client : false;
     }
 
     /**
-     * @param Connection $connection
+     * @param Connection $connection The object representing the connection.
      *
-     * @return bool
+     * @return bool Returns true if the client passed validation.
      */
     abstract protected function validateConnection(Connection $connection): bool;
 
     /**
-     * @param Connection $connection
+     * @param Connection $connection The object representing the connection.
      *
-     * @return mixed
+     * @return void
      */
     abstract protected function onConnect(Connection $connection);
 
     /**
-     * @param Connection $connection
+     * @param Connection $connection The object representing the connection.
      *
-     * @return mixed
+     * @return void
      */
     abstract protected function onDisconnect(Connection $connection);
 
     /**
-     * @param Connection $connection
+     * @param Connection $connection The object representing the connection.
      */
     public function disconnect(Connection $connection)
     {
@@ -216,7 +221,7 @@ abstract class Server
      * @param Connection $connection
      * @param string     $message
      *
-     * @return mixed
+     * @return void
      */
     abstract protected function onMessage(Connection $connection, string $message);
 

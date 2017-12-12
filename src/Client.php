@@ -8,14 +8,13 @@ namespace vakata\websocket;
  *
  * @package vakata\websocket
  */
-class Client
+abstract class Client
 {
     use Base {
         Base::send as protected _send;
     }
     protected $socket  = null;
     protected $message = null;
-    protected $tick    = null;
 
     /**
      * Create an instance.
@@ -116,38 +115,6 @@ class Client
     }
 
     /**
-     * Set a callback to execute when a message arrives.
-     *
-     * The callable will receive the message string and the server instance.
-     *
-     * @param  callable $callback the callback
-     *
-     * @return self
-     */
-    public function onMessage(callable $callback)
-    {
-        $this->message = $callback;
-
-        return $this;
-    }
-
-    /**
-     * Set a callback to execute every few milliseconds.
-     *
-     * The callable will receive the server instance. If it returns boolean `false` the client will stop listening.
-     *
-     * @param  callable $callback the callback
-     *
-     * @return self
-     */
-    public function onTick(callable $callback)
-    {
-        $this->tick = $callback;
-
-        return $this;
-    }
-
-    /**
      * Send a message to the server.
      *
      * @param  string $data   the data to send
@@ -168,10 +135,8 @@ class Client
     public function run()
     {
         while (true) {
-            if (isset($this->tick)) {
-                if (call_user_func($this->tick, $this) === false) {
-                    break;
-                }
+            if (!$this->onTick()) {
+                break;
             }
             $changed    = [$this->socket];
             $write      = [];
@@ -193,4 +158,20 @@ class Client
             usleep(5000);
         }
     }
+
+    /**
+     * Return false if you want the client to disconnect.
+     *
+     * @return bool
+     */
+    abstract protected function onTick(): bool;
+
+    /**
+     * Triggers on an incoming message.
+     *
+     * @param string $message
+     *
+     * @return void
+     */
+    abstract protected function onMessage(string $message);
 }
