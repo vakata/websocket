@@ -230,8 +230,10 @@ class Server
         if (isset($headers['cookie'])) {
             $temp = explode(';', $headers['cookie']);
             foreach ($temp as $v) {
-                $v = explode('=', $v, 2);
-                $cookies[trim($v[0])] = $v[1];
+                if(trim($v) !== '' && strpos($v, '=') !== false){
+                    $v = explode('=', $v, 2);
+                    $cookies[trim($v[0])] = $v[1];
+                }
             }
         }
         $client = [
