@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace vakata\websocket;
 
@@ -24,5 +25,9 @@ class ServerClient
     public function send(string $data): bool
     {
         return $this->server->send($this->socket, $data);
+    }
+    public function disconnect(): void
+    {
+        $this->server->disconnectClient($this->socket);
     }
 }

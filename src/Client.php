@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace vakata\websocket;
 
@@ -14,8 +15,14 @@ class Client
      * @var resource
      */
     protected mixed $socket = null;
+    protected string $address = 'ws://127.0.0.1:8080';
+    /**
+     * @var array<string,string>
+     */
+    protected array $headers = [];
     protected ?Closure $message = null;
     protected ?Closure $tick = null;
+    protected bool $disconnected = true;
 
     /**
      * Create an instance.
@@ -24,11 +31,17 @@ class Client
      */
     public function __construct(string $address = 'ws://127.0.0.1:8080', array $headers = [])
     {
-        $addr = parse_url($address);
+        $this->address = $address;
+        $this->headers = $headers;
+    }
+
+    protected function preconnect(): void
+    {
+        $addr = parse_url($this->address);
         if ($addr === false || !isset($addr['host']) || !isset($addr['port'])) {
             throw new WebSocketException('Invalid address');
         }
-
+        $headers = $this->headers;
         $this->socket = fsockopen(
             (isset($addr['scheme']) && in_array($addr['scheme'], ['ssl', 'tls', 'wss']) ? 'tls://' : '') .
                 $addr['host'],
@@ -63,7 +76,9 @@ class Client
         if (trim($matches[1]) !== base64_encode(pack('H*', sha1($key . self::$magic)))) {
             throw new WebSocketException('Bad key');
         }
+        $this->disconnected = false;
     }
+
     protected function generateKey(): string
     {
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"$&/()=[]{}0123456789';
@@ -133,11 +148,18 @@ class Client
     {
         return $this->_send($this->socket, $data, $opcode, true);
     }
+    public function disconnect(): void
+    {
+        $this->disconnected = true;
+    }
     /**
      * Start listening.
      */
-    public function run(): void
+    public function connect(): void
     {
+        if ($this->disconnected) {
+            $this->preconnect();
+        }
         while (true) {
             if (isset($this->tick)) {
                 if (call_user_func($this->tick, $this) === false) {
@@ -155,10 +177,16 @@ class Client
                             call_user_func($this->message, $message, $this);
                         }
                     } catch (WebSocketException $ignore) {
+                        break 2;
                     }
                 }
             }
+            if ($this->disconnected) {
+                break;
+            }
             usleep(5000);
         }
+        $this->disconnected = true;
+        @fclose($this->socket);
     }
 }

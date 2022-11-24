@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace vakata\websocket;
 
@@ -103,7 +104,7 @@ class Server
                     if ($socket === $this->server) {
                         $temp = stream_socket_accept($this->server);
                         if ($temp !== false) {
-                            if ($this->connect($temp)) {
+                            if ($this->connected($temp)) {
                                 if (isset($this->callbacks['connect'])) {
                                     call_user_func($this->callbacks['connect'], $this->clients[(int) $temp], $this);
                                 }
@@ -120,7 +121,7 @@ class Server
                             if (isset($this->callbacks['disconnect'])) {
                                 call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
                             }
-                            $this->disconnect($socket);
+                            $this->disconnectClient($socket);
                         }
                     }
                 }
@@ -225,11 +226,11 @@ class Server
         return $this;
     }
     /**
-     * connect
+     * connected
      * @param resource $socket
      * @return bool
      */
-    protected function connect(mixed &$socket): bool
+    protected function connected(mixed &$socket): bool
     {
         try {
             $headers = $this->receiveClear($socket);
@@ -296,17 +297,13 @@ class Server
         }
     }
     /**
-     * disconnect
+     * disconnectClient
      * @param resource $socket
      * @return void
      */
-    protected function disconnect(mixed &$socket): void
+    public function disconnectClient(mixed &$socket): void
     {
+        @stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
         unset($this->clients[(int) $socket], $this->sockets[(int) $socket], $socket);
-    }
-
-    public function disconnectClient(&$socket)
-    {
-        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
     }
 }
