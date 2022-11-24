@@ -36,8 +36,12 @@ class Server
      * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
      * @param  string $pass    optional password for the PEM certificate
      */
-    public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null, string $private_key = null)
-    {
+    public function __construct(
+        string $address = 'ws://127.0.0.1:8080',
+        string $cert = null,
+        string $pass = null,
+        string $private_key = null
+    ) {
         $addr = $this->parseAddress($address);
 
         $context = stream_context_create();
