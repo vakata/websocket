@@ -304,4 +304,9 @@ class Server
     {
         unset($this->clients[(int) $socket], $this->sockets[(int) $socket], $socket);
     }
+
+    public function disconnectClient(&$socket)
+    {
+        stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
+    }
 }
