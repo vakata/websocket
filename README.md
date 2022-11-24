@@ -2,9 +2,6 @@
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
-[![Build Status][ico-travis]][link-travis]
-[![Scrutinizer Code Quality][ico-code-quality]][link-scrutinizer]
-[![Code Coverage][ico-scrutinizer]][link-scrutinizer]
 
 PHP websocket server and client. Supports secure sockets.
 
@@ -23,8 +20,8 @@ $ composer require vakata/websocket
 $server = new \vakata\websocket\Server('ws://127.0.0.1:8080');
 $server->onMessage(function ($sender, $message, $server) {
     foreach ($server->getClients() as $client) {
-        if ((int)$sender['socket'] !== (int)$client['socket']) {
-            $server->send($client['socket'], $message);
+        if ($client !== $sender) {
+            $client->send($message);
         }
     }
 });
@@ -42,14 +39,12 @@ $client->onMessage(function ($message, $client) {
 $client->run();
 ```
 
-Read more in the [API docs](docs/README.md)
+## Usage in HTML
 
-## Testing
-
-``` bash
-$ composer test
+``` js
+var sock = new WebSocket('ws://127.0.0.1:8080/');
+sock.send("TEST");
 ```
-
 
 ## Contributing
 
@@ -62,7 +57,6 @@ If you discover any security related issues, please email github@vakata.com inst
 ## Credits
 
 - [vakata][link-author]
-- [All Contributors][link-contributors]
 
 ## License
 
@@ -70,19 +64,8 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 [ico-version]: https://img.shields.io/packagist/v/vakata/websocket.svg?style=flat-square
 [ico-license]: https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/vakata/websocket/master.svg?style=flat-square
-[ico-scrutinizer]: https://img.shields.io/scrutinizer/coverage/g/vakata/websocket.svg?style=flat-square
-[ico-code-quality]: https://img.shields.io/scrutinizer/g/vakata/websocket.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/vakata/websocket.svg?style=flat-square
-[ico-cc]: https://img.shields.io/codeclimate/github/vakata/websocket.svg?style=flat-square
-[ico-cc-coverage]: https://img.shields.io/codeclimate/coverage/github/vakata/websocket.svg?style=flat-square
 
 [link-packagist]: https://packagist.org/packages/vakata/websocket
-[link-travis]: https://travis-ci.org/vakata/websocket
-[link-scrutinizer]: https://scrutinizer-ci.com/g/vakata/websocket
-[link-code-quality]: https://scrutinizer-ci.com/g/vakata/websocket
 [link-downloads]: https://packagist.org/packages/vakata/websocket
 [link-author]: https://github.com/vakata
-[link-contributors]: ../../contributors
-[link-cc]: https://codeclimate.com/github/vakata/websocket
 

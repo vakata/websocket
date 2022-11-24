@@ -11,9 +11,9 @@ trait Base
 {
     /**
      * all available opcodes
-     * @var array
+     * @var array<string,int>
      */
-    protected static $opcodes = [
+    protected static array $opcodes = [
         'continuation' => 0,
         'text' => 1,
         'binary' => 2,
@@ -21,24 +21,25 @@ trait Base
         'ping' => 9,
         'pong' => 10,
     ];
+
     /**
-     * buffer size for all operations in bytes (defaults to 4096)
-     * @var integer
+     * @var int<1, max>
      */
-    protected static $fragmentSize = 4096;
+    protected static int $fragmentSize = 4096;
+
     /**
      * the magic key used to generate websocket keys (per specs)
      * @var string
      */
-    protected static $magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+    protected static string $magic = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
     /**
      * Send data to a socket in clear form (basically fwrite)
-     * @param  resource    &$socket the socket to write to
-     * @param  string    $data    the data to send
-     * @return bool             was the send successful
+     * @param  resource  &$socket  the socket to write to
+     * @param  string    $data     the data to send
+     * @return bool                was the send successful
      */
-    public function sendClear(&$socket, $data) : bool
+    public function sendClear(mixed &$socket, string $data): bool
     {
         return fwrite($socket, $data) > 0;
     }
@@ -50,16 +51,13 @@ trait Base
      * @param  boolean $masked  should the data be masked (per specs the server should not mask, defaults to false)
      * @return bool           was the send successful
      */
-    public function send(&$socket, $data, $opcode = 'text', $masked = false)
+    public function send(mixed &$socket, string $data, string $opcode = 'text', bool $masked = false): bool
     {
         while (strlen($data)) {
             $temp = substr($data, 0, static::$fragmentSize);
             $data = substr($data, static::$fragmentSize);
-            if ($data === false) {
-                $data = '';
-            }
             $temp = $this->encode($temp, $opcode, $masked, strlen($data) === 0);
-            
+
             if (!is_resource($socket) || get_resource_type($socket) !== "stream") {
                 return false;
             }
@@ -80,12 +78,12 @@ trait Base
      * @param  resource       &$socket the socket to read from
      * @return string                the data that was read
      */
-    public function receiveClear(&$socket) : string
+    public function receiveClear(mixed &$socket): string
     {
         $data = '';
         $read = static::$fragmentSize;
         do {
-            $buff = fread($socket, $read);
+            $buff = fread($socket, max(0, $read));
             if ($buff === false) {
                 return '';
             }
@@ -105,7 +103,7 @@ trait Base
      * @param  resource  &$socket the socket to read from
      * @return string           the read data (decoded)
      */
-    public function receive(&$socket) : string
+    public function receive(mixed &$socket): string
     {
         $data = fread($socket, 2);
         if ($data === false) {
@@ -114,7 +112,7 @@ trait Base
         if (strlen($data) === 1) {
             $data .= fread($socket, 1);
         }
-        if ($data === false || strlen($data) < 2) {
+        if (strlen($data) < 2) {
             throw new WebSocketException('Could not receive data');
         }
         $final = (bool) (ord($data[0]) & 1 << 7);
@@ -135,7 +133,7 @@ trait Base
             for ($i = 0; $i < strlen($temp); ++$i) {
                 $length .= sprintf('%08b', ord($temp[$i]));
             }
-            $length = bindec($length);
+            $length = (int)bindec($length);
         }
         $mask = '';
         if ($masked) {
@@ -166,10 +164,10 @@ trait Base
             throw new WebSocketException('Client disconnect');
         }
 
-        return $final ? $payload : $payload.$this->receive($socket);
+        return $final ? $payload : $payload . $this->receive($socket);
     }
 
-    protected function encode($data, $opcode = 'text', $masked = true, $final = true)
+    protected function encode(mixed $data, mixed $opcode = 'text', bool $masked = true, bool $final = true): string
     {
         $length = strlen($data);
 

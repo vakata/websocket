@@ -2,19 +2,33 @@
 
 namespace vakata\websocket;
 
+use Closure;
+
 /**
  * A websocket server class.
  */
 class Server
 {
     use Base;
-    
-    protected $address = '';
-    protected $server = null;
-    protected $sockets = [];
-    protected $clients = [];
-    protected $callbacks = [];
-    protected $tick = null;
+
+    protected string $address = '';
+    /**
+     * @var resource
+     */
+    protected mixed $server = null;
+    /**
+     * @var array<resource>
+     */
+    protected array $sockets = [];
+    /**
+     * @var array<int,ServerClient>
+     */
+    protected array $clients = [];
+    /**
+     * @var array<string,Closure>
+     */
+    protected array $callbacks = [];
+    protected ?Closure $tick = null;
 
     /**
      * Create an instance.
@@ -40,17 +54,19 @@ class Server
         $ern = null;
         $ers = null;
         $this->server = @stream_socket_server(
-            (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp').'://'.$addr['host'].':'.$addr['port'],
+            (in_array($addr['scheme'], ['wss', 'tls']) ? 'tls' : 'tcp') . '://' . $addr['host'] . ':' . $addr['port'],
             $ern,
             $ers,
             STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
             $context
-        );
-        if ($this->server === false) {
-            throw new WebSocketException('Could not create server');
-        }
+        ) ?: throw new WebSocketException('Could not create server');
     }
-    protected function parseAddress(string $address) : array
+    /**
+     * @param string $address
+     * @return array<string,string|int>
+     * @throws WebSocketException
+     */
+    protected function parseAddress(string $address): array
     {
         $addr = parse_url($address);
         if ($addr === false || !isset($addr['scheme']) || !isset($addr['host']) || !isset($addr['port'])) {
@@ -62,7 +78,7 @@ class Server
     /**
      * Start processing requests. This method runs in an infinite loop.
      */
-    public function run()
+    public function run(): void
     {
         $this->sockets[] = $this->server;
         while (true) {
@@ -112,9 +128,9 @@ class Server
     }
     /**
      * Get an array of all connected clients.
-     * @return array     the clients
+     * @return array<int,ServerClient>     the clients
      */
-    public function getClients() : array
+    public function getClients(): array
     {
         return $this->clients;
     }
@@ -122,7 +138,7 @@ class Server
      * Get the server socket.
      * @return resource    the socket
      */
-    public function getServer()
+    public function getServer(): mixed
     {
         return $this->server;
     }
@@ -136,9 +152,9 @@ class Server
      * @param  callable       $callback the callback to execute when a client connects
      * @return $this
      */
-    public function validateClient(callable $callback) : Server
+    public function validateClient(callable $callback): static
     {
-        $this->callbacks['validate'] = $callback;
+        $this->callbacks['validate'] = Closure::fromCallable($callback);
 
         return $this;
     }
@@ -151,9 +167,9 @@ class Server
      * @param  callable  $callback the callback to execute
      * @return $this
      */
-    public function onConnect(callable $callback) : Server
+    public function onConnect(callable $callback): static
     {
-        $this->callbacks['connect'] = $callback;
+        $this->callbacks['connect'] = Closure::fromCallable($callback);
 
         return $this;
     }
@@ -166,9 +182,9 @@ class Server
      * @param  callable     $callback the callback
      * @return $this
      */
-    public function onDisconnect(callable $callback) : Server
+    public function onDisconnect(callable $callback): static
     {
-        $this->callbacks['disconnect'] = $callback;
+        $this->callbacks['disconnect'] = Closure::fromCallable($callback);
 
         return $this;
     }
@@ -182,9 +198,9 @@ class Server
      * @param  callable  $callback the callback
      * @return $this
      */
-    public function onMessage(callable $callback) : Server
+    public function onMessage(callable $callback): static
     {
-        $this->callbacks['message'] = $callback;
+        $this->callbacks['message'] = Closure::fromCallable($callback);
 
         return $this;
     }
@@ -195,13 +211,18 @@ class Server
      * @param  callable  $callback the callback
      * @return $this
      */
-    public function onTick(callable $callback) : Server
+    public function onTick(callable $callback): static
     {
-        $this->tick = $callback;
+        $this->tick = Closure::fromCallable($callback);
 
         return $this;
     }
-    protected function connect(&$socket) : bool
+    /**
+     * connect
+     * @param resource $socket
+     * @return bool
+     */
+    protected function connect(mixed &$socket): bool
     {
         try {
             $headers = $this->receiveClear($socket);
@@ -209,8 +230,8 @@ class Server
                 return false;
             }
             $headers = str_replace(["\r\n", "\n"], ["\n", "\r\n"], $headers);
-            $headers = array_filter(explode("\r\n", preg_replace("(\r\n\s+)", ' ', $headers)));
-            $request = explode(' ', array_shift($headers));
+            $headers = array_filter(explode("\r\n", preg_replace("(\r\n\s+)", ' ', $headers) ?? ''));
+            $request = explode(' ', array_shift($headers) ?? '');
             if (strtoupper($request[0]) !== 'GET') {
                 $this->sendClear($socket, "HTTP/1.1 405 Method Not Allowed\r\n\r\n");
                 return false;
@@ -221,7 +242,8 @@ class Server
                 $temp[trim(strtolower($header[0]))] = trim($header[1]);
             }
             $headers = $temp;
-            if (!isset($headers['sec-websocket-key']) ||
+            if (
+                !isset($headers['sec-websocket-key']) ||
                 !isset($headers['upgrade']) ||
                 !isset($headers['connection']) ||
                 strtolower($headers['upgrade']) != 'websocket' ||
@@ -238,12 +260,7 @@ class Server
                     $cookies[trim($v[0])] = $v[1];
                 }
             }
-            $client = [
-                'socket' => $socket,
-                'headers' => $headers,
-                'resource' => $request[1],
-                'cookies' => $cookies,
-            ];
+            $client = new ServerClient($socket, $headers, $request[1], $cookies, $this);
             if (isset($this->callbacks['validate']) && !call_user_func($this->callbacks['validate'], $client, $this)) {
                 $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
                 return false;
@@ -254,21 +271,27 @@ class Server
             $response[] = 'Upgrade: WebSocket';
             $response[] = 'Connection: Upgrade';
             $response[] = 'Sec-WebSocket-Version: 13';
-            $response[] = 'Sec-WebSocket-Location: '.$this->address;
-            $response[] = 'Sec-WebSocket-Accept: '.base64_encode(sha1($headers['sec-websocket-key'].self::$magic, true));
+            $response[] = 'Sec-WebSocket-Location: ' . $this->address;
+            $response[] = 'Sec-WebSocket-Accept: ' .
+                base64_encode(sha1($headers['sec-websocket-key'] . self::$magic, true));
             if (isset($headers['origin'])) {
-                $response[] = 'Sec-WebSocket-Origin: '.$headers['origin'];
+                $response[] = 'Sec-WebSocket-Origin: ' . $headers['origin'];
             }
 
             $this->sockets[(int) $socket] = $socket;
             $this->clients[(int) $socket] = $client;
 
-            return $this->sendClear($socket, implode("\r\n", $response)."\r\n\r\n");
+            return $this->sendClear($socket, implode("\r\n", $response) . "\r\n\r\n");
         } catch (WebSocketException $e) {
             return false;
         }
     }
-    protected function disconnect(&$socket)
+    /**
+     * disconnect
+     * @param resource $socket
+     * @return void
+     */
+    protected function disconnect(mixed &$socket): void
     {
         unset($this->clients[(int) $socket], $this->sockets[(int) $socket], $socket);
     }
