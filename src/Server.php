@@ -36,7 +36,7 @@ class Server
      * @param  string $cert    optional PEM encoded public and private keys to secure the server with (if `wss` is used)
      * @param  string $pass    optional password for the PEM certificate
      */
-    public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null)
+    public function __construct(string $address = 'ws://127.0.0.1:8080', string $cert = null, string $pass = null, string $private_key = null)
     {
         $addr = $this->parseAddress($address);
 
@@ -45,6 +45,9 @@ class Server
             stream_context_set_option($context, 'ssl', 'allow_self_signed', true);
             stream_context_set_option($context, 'ssl', 'verify_peer', false);
             stream_context_set_option($context, 'ssl', 'local_cert', $cert);
+            if ($private_key) {
+                stream_context_set_option($context, 'ssl', 'local_pk', $private_key);
+            }
             if ($pass !== null) {
                 stream_context_set_option($context, 'ssl', 'passphrase', $pass);
             }
@@ -256,8 +259,10 @@ class Server
             if (isset($headers['cookie'])) {
                 $temp = explode(';', $headers['cookie']);
                 foreach ($temp as $v) {
-                    $v = explode('=', $v, 2);
-                    $cookies[trim($v[0])] = $v[1];
+                    if (trim($v) !== '' && strpos($v, '=') !== false) {
+                        $v = explode('=', $v, 2);
+                        $cookies[trim($v[0])] = $v[1];
+                    }
                 }
             }
             $client = new ServerClient($socket, $headers, $request[1], $cookies, $this);
