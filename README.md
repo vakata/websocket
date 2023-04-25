@@ -36,7 +36,7 @@ $client = new \vakata\websocket\Client('ws://127.0.0.1:8080');
 $client->onMessage(function ($message, $client) {
     echo $message . "\r\n";
 });
-$client->run();
+$client->connect();
 ```
 
 ## Usage in HTML
