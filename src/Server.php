@@ -155,7 +155,7 @@ class Server
      * Set a callback to be executed when a client connects, returning `false` will prevent the client from connecting.
      *
      * The callable will receive:
-     *  - an associative array with client data
+     *  - a ServerClient instance
      *  - the current server instance
      * The callable should return `true` if the client should be allowed to connect or `false` otherwise.
      * @param  callable       $callback the callback to execute when a client connects
@@ -171,7 +171,7 @@ class Server
      * Set a callback to be executed when a client is connected.
      *
      * The callable will receive:
-     *  - an associative array with client data
+     *  - a ServerClient instance
      *  - the current server instance
      * @param  callable  $callback the callback to execute
      * @return $this
@@ -186,7 +186,7 @@ class Server
      * Set a callback to execute when a client disconnects.
      *
      * The callable will receive:
-     *  - an associative array with client data
+     *  - a ServerClient instance
      *  - the current server instance
      * @param  callable     $callback the callback
      * @return $this
@@ -201,7 +201,7 @@ class Server
      * Set a callback to execute when a client sends a message.
      *
      * The callable will receive:
-     *  - an associative array with client data
+     *  - a ServerClient instance
      *  - the message string
      *  - the current server instance
      * @param  callable  $callback the callback
