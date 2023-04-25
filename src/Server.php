@@ -274,6 +274,7 @@ class Server
             $client = new ServerClient($socket, $headers, $request[1], $cookies, $this);
             if (isset($this->callbacks['validate']) && !call_user_func($this->callbacks['validate'], $client, $this)) {
                 $this->sendClear($socket, "HTTP/1.1 400 Bad Request\r\n\r\n");
+                @stream_socket_shutdown($socket, STREAM_SHUT_RDWR);
                 return false;
             }
 
