@@ -117,26 +117,23 @@ trait Base
         if (strlen($data) < 2) {
             throw new WebSocketException('Could not receive data');
         }
-        $final = (bool) (ord($data[0]) & 1 << 7);
-        $rsv1 = (bool) (ord($data[0]) & 1 << 6);
-        $rsv2 = (bool) (ord($data[0]) & 1 << 5);
-        $rsv3 = (bool) (ord($data[0]) & 1 << 4);
-        $opcode = ord($data[0]) & 31;
-        $masked = (bool) (ord($data[1]) >> 7);
 
-        $payload = '';
-        $length = (int) (ord($data[1]) & 127); // Bits 1-7 in byte 1
+        $data = array_values(unpack('C*', $data));
+        $final = (bool)($data[0] & 0b10000000); // Final fragment marker.
+        $rsv = $data[0] & 0b01110000; // Unused bits, ignore
+        $opcode = $data[0] & 0b00001111;
+        $masked = (bool)($data[1] & 0b10000000);
+        $length = $data[1] & 0b01111111;
+
         if ($length > 125) {
             $temp = $length === 126 ? fread($socket, 2) : fread($socket, 8);
             if ($temp === false) {
                 throw new WebSocketException('Could not receive data');
             }
-            $length = '';
-            for ($i = 0; $i < strlen($temp); ++$i) {
-                $length .= sprintf('%08b', ord($temp[$i]));
-            }
-            $length = (int)bindec($length);
+            $length = $length === 126 ? current(unpack('n', $temp)) : current(unpack('J', $temp));
         }
+
+        $payload = '';
         $mask = '';
         if ($masked) {
             $mask = fread($socket, 4);
@@ -147,7 +144,7 @@ trait Base
         if ($length > 0) {
             $temp = '';
             do {
-                $buff = fread($socket, min($length, static::$fragmentSize));
+                $buff = fread($socket, min($length, static::$fragmentSize, $length - strlen($temp)));
                 if ($buff === false) {
                     throw new WebSocketException('Could not receive data');
                 }
