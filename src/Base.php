@@ -105,7 +105,7 @@ trait Base
      * @param  resource  &$socket the socket to read from
      * @return string           the read data (decoded)
      */
-    public function receive(mixed &$socket): string
+    public function receive(mixed &$socket, bool $continuation = false): string
     {
         $data = fread($socket, 2);
         if ($data === false) {
@@ -162,8 +162,11 @@ trait Base
         if ($opcode === static::$opcodes['close']) {
             throw new WebSocketException('Client disconnect');
         }
-
-        return $final ? $payload : $payload . $this->receive($socket);
+        if ($opcode === self::$opcodes['ping']) {
+            $this->send($socket, $payload, 'pong', $masked);
+            return $continuation ? $this->receive($socket, true) : '>PING'.chr(0);
+        }
+        return $final ? $payload : $payload . $this->receive($socket, true);
     }
 
     protected function encode(mixed $data, mixed $opcode = 'text', bool $masked = true, bool $final = true): string

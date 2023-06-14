@@ -114,10 +114,12 @@ class Server
                     } else {
                         try {
                             $message = $this->receive($socket);
-                            $messages[] = [
-                                'client' => $this->clients[(int) $socket],
-                                'message' => $message,
-                            ];
+                            if ($message !== '>PING'.chr(0)) {
+                                $messages[] = [
+                                    'client' => $this->clients[(int) $socket],
+                                    'message' => $message,
+                                ];
+                            }
                         } catch (WebSocketException $e) {
                             if (isset($this->callbacks['disconnect'])) {
                                 call_user_func($this->callbacks['disconnect'], $this->clients[(int) $socket], $this);
