@@ -40,9 +40,9 @@ class Server
      */
     public function __construct(
         string $address = 'ws://127.0.0.1:8080',
-        string $cert = null,
-        string $pass = null,
-        string $private_key = null
+        ?string $cert = null,
+        ?string $pass = null,
+        ?string $private_key = null
     ) {
         $addr = $this->parseAddress($address);
 
@@ -99,7 +99,7 @@ class Server
             $changed = $this->sockets;
             $write = [];
             $except = [];
-            if (@stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null)) > 0) {
+            if ($changed && @stream_select($changed, $write, $except, (isset($this->tick) ? 0 : null)) > 0) {
                 $messages = [];
                 foreach ($changed as $socket) {
                     if ($socket === $this->server) {
@@ -114,7 +114,7 @@ class Server
                     } else {
                         try {
                             $message = $this->receive($socket);
-                            if ($message !== '>PING'.chr(0)) {
+                            if ($message !== '>PING' . chr(0)) {
                                 $messages[] = [
                                     'client' => $this->clients[(int) $socket],
                                     'message' => $message,
