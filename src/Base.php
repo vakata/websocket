@@ -85,7 +85,7 @@ trait Base
         $data = '';
         $read = static::$fragmentSize;
         do {
-            $buff = fread($socket, max(0, $read));
+            $buff = fread($socket, max(1, $read));
             if ($buff === false) {
                 return '';
             }
@@ -118,7 +118,7 @@ trait Base
             throw new WebSocketException('Could not receive data');
         }
 
-        $data = array_values(unpack('C*', $data));
+        $data = array_values(unpack('C*', $data)?:[]);
         $final = (bool)($data[0] & 0b10000000); // Final fragment marker.
         $rsv = $data[0] & 0b01110000; // Unused bits, ignore
         $opcode = $data[0] & 0b00001111;
@@ -130,7 +130,7 @@ trait Base
             if ($temp === false) {
                 throw new WebSocketException('Could not receive data');
             }
-            $length = $length === 126 ? current(unpack('n', $temp)) : current(unpack('J', $temp));
+            $length = $length === 126 ? current(unpack('n', $temp)?:[]) : current(unpack('J', $temp)?:[]);
         }
 
         $payload = '';
@@ -164,7 +164,7 @@ trait Base
         }
         if ($opcode === self::$opcodes['ping']) {
             $this->send($socket, $payload, 'pong', $masked);
-            return $continuation ? $this->receive($socket, true) : '>PING'.chr(0);
+            return $continuation ? $this->receive($socket, true) : '>PING' . chr(0);
         }
         return $final ? $payload : $payload . $this->receive($socket, true);
     }

@@ -8,9 +8,7 @@ use Closure;
 
 class Client
 {
-    use Base {
-        Base::send as protected _send;
-    }
+    use Base;
 
     /**
      * @var resource
@@ -103,7 +101,7 @@ class Client
             if (strncmp($name, 'HTTP_', 5) === 0) {
                 $name = substr($name, 5);
             }
-            if ($name !== false) {
+            if ($name) {
                 $name = str_replace('_', ' ', strtolower($name));
                 $name = str_replace('-', ' ', strtolower($name));
                 $name = str_replace(' ', '-', ucwords($name));
@@ -140,14 +138,13 @@ class Client
         return $this;
     }
     /**
-     * Send a message to the server.
+     * Send a text message to the server.
      * @param  string $data   the data to send
-     * @param  string $opcode the data opcode, defaults to `"text"`
      * @return bool was the send successful
      */
-    public function send(string $data, string $opcode = 'text'): bool
+    public function sendText(string $data): bool
     {
-        return $this->_send($this->socket, $data, $opcode, true);
+        return $this->send($this->socket, $data, 'text', true);
     }
     public function disconnect(): void
     {
